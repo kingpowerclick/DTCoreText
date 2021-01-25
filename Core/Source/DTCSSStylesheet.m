@@ -40,7 +40,25 @@
 		{
 #if SWIFT_PACKAGE
 			// get resource bundle via macro
-			NSString *path = [SWIFTPM_MODULE_BUNDLE pathForResource:@"default" ofType:@"css"];
+            NSString *path;
+            @try
+            {
+                path = [SWIFTPM_MODULE_BUNDLE pathForResource:@"default" ofType:@"css"];
+            }
+            @catch(NSException *exception)
+            {
+                if ([exception.name isEqualToString: @"SwiftPMResourcesAccessor"])
+                {
+                    NSString *bundleName = [[exception.reason componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceCharacterSet]] lastObject];
+                    
+                    NSURL *bundleURL = [[[NSBundle bundleForClass:self] bundleURL].URLByDeletingLastPathComponent URLByAppendingPathComponent:bundleName];
+                    path = [[bundleURL URLByAppendingPathComponent:@"default.css"] absoluteString];
+                }
+                else
+                {
+                    @throw exception;
+                }
+            }
 #else
 			NSBundle *bundle = [NSBundle bundleForClass:self];
 			NSString *path = [[NSBundle bundleForClass:self] pathForResource:@"default" ofType:@"css"];
